@@ -19,3 +19,8 @@ The `.env` file will be automatically loaded.
 1. Run application: `flask run`
 1. Access the http://localhost:5000/login endpoint and authorize the scopes
 1. Get redirected to http://localhost:5000/callback
+
+## Before Committing Changes
+
+1. Ensure that `pre-commit` is installed: `pip install pre-commit`
+1. Install `pre-commit`: `pre-commit install`
