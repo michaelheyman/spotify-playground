@@ -59,12 +59,22 @@ def callback():
         return f"State mismatch: expected '{stored_state}' but received '{state}'"
 
     try:
-        access_token = request_access_token(code)
+        print(f"code: {code}")
+        token_data = request_access_token(code)
     except requests.exceptions.HTTPError as err:
         print(f"There was an error requesting the access token: {err}")
         return "There was an error requesting the access token"
 
-    print(access_token)
+    print(f"response: {token_data}")
+
+    try:
+        user_profile = request_user_profile(token_data)
+    except requests.exceptions.HTTPError as err:
+        print(f"There was an error requesting the user profile: {err}")
+        return "There was an error requesting the user profile"
+
+    print(f"user_profile: {user_profile}")
+
     return "Received a callback and a token"
 
 
@@ -83,9 +93,22 @@ def request_access_token(code):
 
     response = requests.request("POST", url, data=payload, headers=headers)
     response.raise_for_status()
-    data = response.json()
-    access_token = data["access_token"]
-    return access_token
+    token_data = response.json()
+
+    return token_data
+
+
+def request_user_profile(body):
+    access_token = body["access_token"]
+    url = "https://api.spotify.com/v1/me"
+    headers = {"Authorization": f"Bearer {access_token}"}
+    print(f"access_token: {access_token}")
+
+    response = requests.request("GET", url, headers=headers)
+    response.raise_for_status()
+    user_profile = response.json()
+
+    return user_profile
 
 
 def random_string(length=10):
