@@ -1,6 +1,8 @@
 import base64
+import json
 import random
 import string
+import uuid
 from urllib.parse import urlencode
 
 import requests
@@ -74,6 +76,16 @@ def callback():
         return "There was an error requesting the user profile"
 
     print(f"user_profile: {user_profile}")
+    access_token = token_data["access_token"]
+    user_id = user_profile["id"]
+
+    try:
+        playlist_metadata = create_playlist(user_id, access_token)
+    except requests.exceptions.HTTPError as err:
+        print(f"There was an error creating the playlist: {err}")
+        return "There was an error creating the playlist"
+
+    print(f"Playlist created at {playlist_metadata['href']}")
 
     return "Received a callback and a token"
 
@@ -109,6 +121,23 @@ def request_user_profile(body):
     user_profile = response.json()
 
     return user_profile
+
+
+def create_playlist(
+    user_id,
+    access_token,
+    name=str(uuid.uuid4()),
+    description="Made with spotify-playground",
+):
+    url = f"https://api.spotify.com/v1/users/{user_id}/playlists"
+    payload = {"name": name, "public": False, "description": description}
+    headers = {"Authorization": f"Bearer {access_token}"}
+
+    response = requests.request("POST", url, data=json.dumps(payload), headers=headers)
+    response.raise_for_status()
+    playlist_metadata = response.json
+
+    return playlist_metadata
 
 
 def random_string(length=10):
