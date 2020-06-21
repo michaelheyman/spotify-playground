@@ -1,6 +1,7 @@
 from flask import Flask
-from spotify.settings import ProdConfig
+
 from spotify import routes
+from spotify.settings import ProdConfig
 
 
 def create_app(config_object=ProdConfig):
@@ -8,7 +9,7 @@ def create_app(config_object=ProdConfig):
     :return: a Flask application
     """
 
-    app = Flask(__name__.split('.')[0])
+    app = Flask(__name__.split(".")[0])
     app.url_map.strict_slashes = False
     app.config.from_object(config_object)
     register_blueprints(app)

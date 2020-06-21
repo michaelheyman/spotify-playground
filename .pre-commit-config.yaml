@@ -1,0 +1,28 @@
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v2.3.0
+  hooks:
+  - id: check-merge-conflict
+  - id: check-yaml
+  - id: debug-statements
+  - id: end-of-file-fixer
+  - id: flake8
+    args: [--max-line-length=100]
+  - id: trailing-whitespace
+- repo: https://github.com/ambv/black
+  rev: stable
+  hooks:
+  - id: black
+    language_version: python3.7
+- repo: https://github.com/asottile/reorder_python_imports
+  rev: v1.4.0
+  hooks:
+  - id: reorder-python-imports
+- repo: local
+  hooks:
+  - id: tests
+    name: pytest
+    entry: pytest -vv
+    pass_filenames: false
+    language: system
+    types: [python]
+    stages: [push]
