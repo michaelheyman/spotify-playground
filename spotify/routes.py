@@ -87,6 +87,16 @@ def callback():
 
     print(f"Playlist created at {playlist_metadata['href']}")
 
+    user_country = user_profile["country"]
+
+    try:
+        track = search_tracks("John Mayer - Neon", user_country, access_token)
+    except requests.exceptions.HTTPError as err:
+        print(f"There was an error searching for the track: {err}")
+        return "There was an error searching for the track"
+
+    print(f"track: {track}")
+
     return "Received a callback and a token"
 
 
@@ -135,9 +145,30 @@ def create_playlist(
 
     response = requests.request("POST", url, data=json.dumps(payload), headers=headers)
     response.raise_for_status()
-    playlist_metadata = response.json
+    playlist_metadata = response.json()
 
     return playlist_metadata
+
+
+def search_tracks(query, country, access_token):
+    def get_most_popular_track(tracks_dict):
+        items = tracks_dict["tracks"]["items"]
+        sorted_items = sorted(items, key=lambda x: x["popularity"], reverse=True)
+        most_popular_track = sorted_items[0]
+        return most_popular_track
+
+    url = "https://api.spotify.com/v1/search"
+    params = urlencode({"q": query, "type": "track", "market": country})
+    headers = {"Authorization": f"Bearer {access_token}"}
+    url = f"{url}?{params}"
+
+    response = requests.request("GET", url, headers=headers)
+    response.raise_for_status()
+
+    tracks = response.json()
+    track = get_most_popular_track(tracks)
+
+    return track
 
 
 def random_string(length=10):
