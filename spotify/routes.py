@@ -100,17 +100,14 @@ def callback():
 
     playlist_id = playlist_metadata["id"]
 
-    snapshots = []
-    for track in tracks:
-        try:
-            snapshot = add_track_to_playlist(playlist_id, access_token, track)
-            snapshots.append(snapshot)
-        except requests.exceptions.HTTPError as err:
-            print(f"There was an error adding a track to the playlist: {err}")
-            # TODO: delete created playlist when this happens
-            return "There was an error adding a track to the playlist"
+    try:
+        snapshot = add_tracks_to_playlist(playlist_id, access_token, tracks)
+    except requests.exceptions.HTTPError as err:
+        print(f"There was an error adding tracks to the playlist: {err}")
+        # TODO: delete created playlist when this happens
+        return "There was an error adding tracks to the playlist"
 
-    print(f"snapshots: {snapshots}")
+    print(f"snapshot: {snapshot}")
 
     return "Playlist created"
 
@@ -199,10 +196,10 @@ def search_track(query, country, access_token):
     return track
 
 
-def add_track_to_playlist(playlist_id, access_token, track):
+def add_tracks_to_playlist(playlist_id, access_token, tracks):
     url = f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
-    uri = track["uri"]
-    params = urlencode({"uris": uri})
+    uris = ",".join([track["uri"] for track in tracks])
+    params = urlencode({"uris": uris})
     headers = {"Authorization": f"Bearer {access_token}"}
     url = f"{url}?{params}"
 
