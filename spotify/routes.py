@@ -11,6 +11,7 @@ from flask import redirect
 from flask import request
 from flask.helpers import get_debug_flag
 
+from spotify.scraper import get_titles
 from spotify.settings import DevConfig
 from spotify.settings import ProdConfig
 
@@ -89,25 +90,29 @@ def callback():
 
     user_country = user_profile["country"]
 
-    try:
-        track = search_tracks("John Mayer - Neon", user_country, access_token)
-    except requests.exceptions.HTTPError as err:
-        print(f"There was an error searching for the track: {err}")
-        return "There was an error searching for the track"
+    # TODO: think of how you want to handle URL input
+    url = "https://www.setlist.fm/setlist/chvrches/2019/wiltern-theatre-los-angeles-ca-39a495b.html"
 
-    print(f"track: {track}")
+    titles = get_titles(url)
+    tracks = search_tracks(titles, user_country, access_token)
+
+    print(f"Found tracks: {tracks}")
 
     playlist_id = playlist_metadata["id"]
 
-    try:
-        snapshot = add_track_to_playlist(playlist_id, access_token, track)
-    except requests.exceptions.HTTPError as err:
-        print(f"There was an error adding a track to the playlist: {err}")
-        return "There was an error adding a track to the playlist"
+    snapshots = []
+    for track in tracks:
+        try:
+            snapshot = add_track_to_playlist(playlist_id, access_token, track)
+            snapshots.append(snapshot)
+        except requests.exceptions.HTTPError as err:
+            print(f"There was an error adding a track to the playlist: {err}")
+            # TODO: delete created playlist when this happens
+            return "There was an error adding a track to the playlist"
 
-    print(f"snapshot: {snapshot}")
+    print(f"snapshots: {snapshots}")
 
-    return "Received a callback and a token"
+    return "Playlist created"
 
 
 def request_access_token(code):
@@ -160,7 +165,20 @@ def create_playlist(
     return playlist_metadata
 
 
-def search_tracks(query, country, access_token):
+def search_tracks(titles, country, access_token):
+    tracks = []
+
+    for title in titles:
+        try:
+            track = search_track(title, country, access_token)
+            tracks.append(track)
+        except requests.exceptions.HTTPError as err:
+            print(f"there was an error searching for the track: {err}")
+
+    return tracks
+
+
+def search_track(query, country, access_token):
     def get_most_popular_track(tracks_dict):
         items = tracks_dict["tracks"]["items"]
         sorted_items = sorted(items, key=lambda x: x["popularity"], reverse=True)
