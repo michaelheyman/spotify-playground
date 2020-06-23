@@ -11,6 +11,7 @@ from flask import redirect
 from flask import request
 from flask.helpers import get_debug_flag
 
+from spotify.logger import logger
 from spotify.scraper import get_titles
 from spotify.settings import DevConfig
 from spotify.settings import ProdConfig
@@ -62,31 +63,31 @@ def callback():
         return f"State mismatch: expected '{stored_state}' but received '{state}'"
 
     try:
-        print(f"code: {code}")
+        logger.debug(f"code: {code}")
         token_data = request_access_token(code)
     except requests.exceptions.HTTPError as err:
-        print(f"There was an error requesting the access token: {err}")
+        logger.error(f"There was an error requesting the access token: {err}")
         return "There was an error requesting the access token"
 
-    print(f"response: {token_data}")
+    logger.debug(f"response: {token_data}")
 
     try:
         user_profile = request_user_profile(token_data)
     except requests.exceptions.HTTPError as err:
-        print(f"There was an error requesting the user profile: {err}")
+        logger.error(f"There was an error requesting the user profile: {err}")
         return "There was an error requesting the user profile"
 
-    print(f"user_profile: {user_profile}")
+    logger.debug(f"user_profile: {user_profile}")
     access_token = token_data["access_token"]
     user_id = user_profile["id"]
 
     try:
         playlist_metadata = create_playlist(user_id, access_token)
     except requests.exceptions.HTTPError as err:
-        print(f"There was an error creating the playlist: {err}")
+        logger.error(f"There was an error creating the playlist: {err}")
         return "There was an error creating the playlist"
 
-    print(f"Playlist created at {playlist_metadata['href']}")
+    logger.debug(f"Playlist created at {playlist_metadata['href']}")
 
     user_country = user_profile["country"]
 
@@ -96,18 +97,18 @@ def callback():
     titles = get_titles(url)
     tracks = search_tracks(titles, user_country, access_token)
 
-    print(f"Found tracks: {tracks}")
+    logger.debug(f"Found tracks: {tracks}")
 
     playlist_id = playlist_metadata["id"]
 
     try:
         snapshot = add_tracks_to_playlist(playlist_id, access_token, tracks)
     except requests.exceptions.HTTPError as err:
-        print(f"There was an error adding tracks to the playlist: {err}")
+        logger.error(f"There was an error adding tracks to the playlist: {err}")
         # TODO: delete created playlist when this happens
         return "There was an error adding tracks to the playlist"
 
-    print(f"snapshot: {snapshot}")
+    logger.debug(f"snapshot: {snapshot}")
 
     return "Playlist created"
 
@@ -136,7 +137,7 @@ def request_user_profile(body):
     access_token = body["access_token"]
     url = "https://api.spotify.com/v1/me"
     headers = {"Authorization": f"Bearer {access_token}"}
-    print(f"access_token: {access_token}")
+    logger.debug(f"access_token: {access_token}")
 
     response = requests.request("GET", url, headers=headers)
     response.raise_for_status()
@@ -170,7 +171,7 @@ def search_tracks(titles, country, access_token):
             track = search_track(title, country, access_token)
             tracks.append(track)
         except requests.exceptions.HTTPError as err:
-            print(f"there was an error searching for the track: {err}")
+            logger.warn(f"there was an error searching for the track: {err}")
 
     return tracks
 

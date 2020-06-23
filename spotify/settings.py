@@ -2,6 +2,16 @@
 import os
 
 
+def map_level(level):
+    """Maps logging level strings to logging level codes
+    :param level: The level string to be mapped.
+    :return: Number that matches the logging level.
+    """
+    return {"critical": 50, "error": 40, "warning": 30, "info": 20, "debug": 10}.get(
+        level, 10
+    )
+
+
 class Config(object):
     """Base configuration."""
 
@@ -30,6 +40,7 @@ class ProdConfig(Config):
 
     ENV = "prod"
     DEBUG = False
+    LOGGING_LEVEL = map_level(os.environ.get("LOGGING_LEVEL", "info"))
 
 
 class DevConfig(Config):
@@ -37,6 +48,7 @@ class DevConfig(Config):
 
     ENV = "dev"
     DEBUG = True
+    LOGGING_LEVEL = map_level(os.environ.get("LOGGING_LEVEL", "debug"))
 
 
 class TestConfig(Config):
