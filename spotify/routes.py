@@ -97,6 +97,16 @@ def callback():
 
     print(f"track: {track}")
 
+    playlist_id = playlist_metadata["id"]
+
+    try:
+        snapshot = add_track_to_playlist(playlist_id, access_token, track)
+    except requests.exceptions.HTTPError as err:
+        print(f"There was an error adding a track to the playlist: {err}")
+        return "There was an error adding a track to the playlist"
+
+    print(f"snapshot: {snapshot}")
+
     return "Received a callback and a token"
 
 
@@ -169,6 +179,21 @@ def search_tracks(query, country, access_token):
     track = get_most_popular_track(tracks)
 
     return track
+
+
+def add_track_to_playlist(playlist_id, access_token, track):
+    url = f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
+    uri = track["uri"]
+    params = urlencode({"uris": uri})
+    headers = {"Authorization": f"Bearer {access_token}"}
+    url = f"{url}?{params}"
+
+    response = requests.request("POST", url, headers=headers)
+    response.raise_for_status()
+
+    snapshot = response.json()
+
+    return snapshot
 
 
 def random_string(length=10):
