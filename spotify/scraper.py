@@ -31,7 +31,7 @@ def get_songs(url_contents):
 
 
 def get_artist(url_contents):
-    soup = BeautifulSoup(url_contents)
+    soup = BeautifulSoup(url_contents, "html.parser")
     artist = soup.title.string.split(" ")[0]
     return artist
 
