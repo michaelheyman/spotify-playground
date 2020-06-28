@@ -1,0 +1,8 @@
+<h2>Hi {{display_name}},
+    <small><a href="/sign_out">[sign out]<a /></small>
+</h2>
+<a href="/playlists">my playlists</a>
+<form action="{{ url_for('routes.submit') }}" method="post">
+  <input type="text" name="setlist_url">
+  <input type="submit" value="Submit">
+</form>
